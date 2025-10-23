@@ -193,12 +193,12 @@ install_packages() {
     )
 
     for PACKAGE in "${PACKAGES[@]}"; do
-        echo "Installing $PACKAGE... (Установка $PACKAGE...)"
+        show_info "Installing $PACKAGE... (Установка $PACKAGE...)"
         sudo apt install -y "$PACKAGE"
         if [ $? -eq 0 ]; then
-            echo "$PACKAGE successfully installed. ($PACKAGE успешно установлен.)"
+            show_success "$PACKAGE successfully installed. ($PACKAGE успешно установлен.)"
         else
-            echo "Error installing $PACKAGE. Skipping... (Ошибка при установке $PACKAGE. Пропускаем...)"
+            show_error "Error installing $PACKAGE. Skipping... (Ошибка при установке $PACKAGE. Пропускаем...)"
         fi
     done
 }
@@ -254,9 +254,8 @@ setup_wallet() {
             netrum-new-wallet
             show_success "$(get_text "wallet_created")"
             ;;
-        2)
-            read -p "$(show_cyan "$(get_text "enter_private_key")")" private_key
-            netrum-import-wallet "$private_key"
+         2)
+            netrum-import-wallet
             show_success "$(get_text "wallet_imported")"
             ;;
         *)
@@ -282,6 +281,7 @@ register_node() {
 # Start sync
 start_sync() {
     show_info "$(get_text "sync_node")"
+    show_warning "Note: This will start sync in background (Примечание: Это запустит синхронизацию в фоне)"
     netrum-sync
     show_success "$(get_text "sync_active")"
 }
@@ -289,6 +289,7 @@ start_sync() {
 # Start mining
 start_mining() {
     show_info "$(get_text "start_mining")"
+    show_warning "Note: This will start mining in background (Примечание: Это запустит майнинг в фоне)"
     netrum-mining
     show_success "$(get_text "mining_active")"
 }
@@ -425,14 +426,12 @@ main_installation() {
     setup_wallet
     check_basename
     register_node
-    start_sync
-    start_mining
 
     echo ""
     show_warning "Important (Важно):"
-    show_white "• Node is syncing with Netrum network (Нода синхронизируется с сетью Netrum)"
-    show_white "• NPT token mining started (Майнинг NPT токенов начался)"
-    show_white "• Use management commands for monitoring (Используйте команды управления для мониторинга)"
+    show_white "• Complete wallet setup and node registration first (Сначала завершите настройку кошелька и регистрацию ноды)"
+    show_white "• Then use management menu to start sync and mining (Затем используйте меню управления для запуска синхронизации и майнинга)"
+    show_white "• Use 'netrum-sync' and 'netrum-mining' commands manually (Используйте команды 'netrum-sync' и 'netrum-mining' вручную)"
     show_white "• Rewards can be claimed every 24 hours (Награды можно получать каждые 24 часа)"
     echo ""
 
