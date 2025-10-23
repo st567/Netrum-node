@@ -6,6 +6,11 @@
 
 This script automates the installation and management of Netrum Lite Node - a lightweight node for participating in the Netrum decentralized compute network.
 
+### Официальные ресурсы / Official Resources
+- **Документация**: https://docs.netrumlabs.com/
+- **Discord**: https://discord.com/invite/Mv6uKBKCZM
+- **GitHub**: https://github.com/NetrumLabs/netrum-lite-node
+
 ## 📋 Требования к системе / System Requirements
 
 ### Минимальные требования / Minimum Requirements:
@@ -179,11 +184,6 @@ netrum-mining-log
 
 ## 📞 Поддержка / Support
 
-### Официальные ресурсы / Official Resources
-- **Документация**: https://docs.netrumlabs.com/
-- **Discord**: https://discord.gg/netrum
-- **GitHub**: https://github.com/NetrumLabs/netrum-lite-node
-
 ### CryptoCompass Resources
 - **Twitter/X**: https://x.com/0xGreenFlag
 - **YouTube**: https://www.youtube.com/@beloglazovpro
@@ -195,15 +195,6 @@ netrum-mining-log
 2. **Время работы**: Важно для получения наград / **Uptime**: Important for earning rewards
 3. **Синхронизация**: Должна быть активна для майнинга / **Sync**: Must be active for mining
 4. **Награды**: Доступны каждые 24 часа / **Rewards**: Available every 24 hours
-
-## 📝 Changelog
-
-### v1.0.0
-- Первоначальный релиз / Initial release
-- Автоматическая установка / Automatic installation
-- Управление кошельком / Wallet management
-- Регистрация ноды / Node registration
-- Майнинг и получение наград / Mining and rewards claiming
 
 ## 📄 Лицензия / License
 
