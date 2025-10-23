@@ -141,6 +141,8 @@ get_text() {
         "clear_node_id") echo "Clear Node ID (Очистить ID ноды)" ;;
         "update_cli") echo "Update CLI (Обновить CLI)" ;;
         "stop_services") echo "Stop Services (Остановить сервисы)" ;;
+        "start_mining") echo "Start Mining (Запустить майнинг)" ;;
+        "check_base_domain") echo "Check Base Domain (Проверить Base домен)" ;;
     esac
 }
 
@@ -193,8 +195,6 @@ install_packages() {
         jq
         bc
         speedtest-cli
-        nodejs
-        npm
     )
 
     for PACKAGE in "${PACKAGES[@]}"; do
@@ -233,14 +233,30 @@ setup_netrum_repo() {
     show_info "$(get_text "cloning_repo")"
 
     # Clone repository
-    git clone https://github.com/NetrumLabs/netrum-lite-node.git /root/netrum-lite-node
+    if git clone https://github.com/NetrumLabs/netrum-lite-node.git /root/netrum-lite-node; then
+        show_success "Repository cloned successfully (Репозиторий успешно клонирован)"
+    else
+        show_error "Failed to clone repository (Не удалось клонировать репозиторий)"
+        return 1
+    fi
+
     cd /root/netrum-lite-node
 
     show_info "$(get_text "installing_deps")"
-    npm install
+    if npm install; then
+        show_success "Dependencies installed successfully (Зависимости успешно установлены)"
+    else
+        show_error "Failed to install dependencies (Не удалось установить зависимости)"
+        return 1
+    fi
 
     show_info "$(get_text "linking_cli")"
-    sudo npm link
+    if sudo npm link; then
+        show_success "CLI linked successfully (CLI успешно связан)"
+    else
+        show_error "Failed to link CLI (Не удалось связать CLI)"
+        return 1
+    fi
 
     show_success "Netrum Lite Node installed (Netrum Lite Node установлен)"
 }
@@ -256,15 +272,25 @@ setup_wallet() {
 
     case $wallet_choice in
         1)
-            netrum-new-wallet
-            show_success "$(get_text "wallet_created")"
+            if netrum-new-wallet; then
+                show_success "$(get_text "wallet_created")"
+            else
+                show_error "Failed to create wallet (Не удалось создать кошелек)"
+                setup_wallet
+                return
+            fi
             echo ""
             show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
             read
             ;;
          2)
-            netrum-import-wallet
-            show_success "$(get_text "wallet_imported")"
+            if netrum-import-wallet; then
+                show_success "$(get_text "wallet_imported")"
+            else
+                show_error "Failed to import wallet (Не удалось импортировать кошелек)"
+                setup_wallet
+                return
+            fi
             echo ""
             show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
             read
@@ -523,11 +549,40 @@ main_installation() {
 
     show_info "$(get_text "installing")"
 
+    # Update system
     update_system
+    if [ $? -ne 0 ]; then
+        show_error "System update failed (Обновление системы не удалось)"
+        return 1
+    fi
+
+    # Install packages
     install_packages
+    if [ $? -ne 0 ]; then
+        show_error "Package installation failed (Установка пакетов не удалась)"
+        return 1
+    fi
+
+    # Install Node.js
     install_nodejs
+    if [ $? -ne 0 ]; then
+        show_error "Node.js installation failed (Установка Node.js не удалась)"
+        return 1
+    fi
+
+    # Setup Netrum repository
     setup_netrum_repo
+    if [ $? -ne 0 ]; then
+        show_error "Netrum repository setup failed (Настройка репозитория Netrum не удалась)"
+        return 1
+    fi
+
+    # Setup wallet
     setup_wallet
+    if [ $? -ne 0 ]; then
+        show_error "Wallet setup failed (Настройка кошелька не удалась)"
+        return 1
+    fi
 
     echo ""
     show_warning "Next Steps (Следующие шаги):"
@@ -559,20 +614,21 @@ show_management_menu() {
         show_white "2) $(get_text "show_wallet")"
         show_white "3) $(get_text "earnings")"
         show_white "4) $(get_text "claim_rewards")"
-        show_white "5) $(get_text "sync_logs")"
-        show_white "6) $(get_text "mining_logs")"
-        show_white "7) $(get_text "sign_register_node")"
-        show_white "8) $(get_text "export_key")"
-        show_white "9) $(get_text "remove_wallet")"
-        show_white "10) $(get_text "clear_node_id")"
-        show_white "11) $(get_text "update_cli")"
-        show_white "12) $(get_text "stop_services")"
-        show_white "13) $(get_text "health_check")"
-        show_white "14) $(get_text "help_commands")"
+        show_white "5) $(get_text "start_mining")"
+        show_white "6) $(get_text "sync_logs")"
+        show_white "7) $(get_text "mining_logs")"
+        show_white "8) $(get_text "sign_register_node")"
+        show_white "9) $(get_text "export_key")"
+        show_white "10) $(get_text "remove_wallet")"
+        show_white "11) $(get_text "clear_node_id")"
+        show_white "12) $(get_text "check_base_domain")"
+        show_white "13) $(get_text "stop_services")"
+        show_white "14) $(get_text "health_check")"
+        show_white "15) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-14] (Выбор [0-14]): ")" choice
+        read -p "$(show_cyan "Choice [0-15] (Выбор [0-15]): ")" choice
 
         case $choice in
             1)
@@ -596,43 +652,74 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             5)
-                cd /root/netrum-lite-node
-                netrum-sync-log
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
+                start_mining
                 ;;
             6)
                 cd /root/netrum-lite-node
-                netrum-mining-log
+
+                # Check if netrum-sync-log command exists and is executable
+                if command -v netrum-sync-log &> /dev/null; then
+                    if [ -x "$(which netrum-sync-log)" ]; then
+                        netrum-sync-log
+                    else
+                        show_error "netrum-sync-log command is not executable (команда netrum-sync-log не исполняема)"
+                        show_info "Try running: chmod +x $(which netrum-sync-log)"
+                        show_info "Or try: sudo chmod +x $(which netrum-sync-log)"
+                    fi
+                else
+                    show_error "netrum-sync-log command not found (команда netrum-sync-log не найдена)"
+                    show_info "Make sure Netrum CLI is properly installed (Убедитесь, что Netrum CLI правильно установлен)"
+                fi
+
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             7)
-                sign_register_node
+                cd /root/netrum-lite-node
+
+                # Check if netrum-mining-log command exists and is executable
+                if command -v netrum-mining-log &> /dev/null; then
+                    if [ -x "$(which netrum-mining-log)" ]; then
+                        netrum-mining-log
+                    else
+                        show_error "netrum-mining-log command is not executable (команда netrum-mining-log не исполняема)"
+                        show_info "Try running: chmod +x $(which netrum-mining-log)"
+                        show_info "Or try: sudo chmod +x $(which netrum-mining-log)"
+                    fi
+                else
+                    show_error "netrum-mining-log command not found (команда netrum-mining-log не найдена)"
+                    show_info "Make sure Netrum CLI is properly installed (Убедитесь, что Netrum CLI правильно установлен)"
+                fi
+
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             8)
+                sign_register_node
+                ;;
+            9)
                 netrum-wallet-key
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            9)
+            10)
                 remove_wallet
                 ;;
-            10)
+            11)
                 clear_node_id
                 ;;
-            11)
-                update_cli
-                ;;
             12)
-                stop_services
+                check_basename
                 ;;
             13)
+                stop_services
+                ;;
+            14)
                 health_check
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            14)
+            15)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
