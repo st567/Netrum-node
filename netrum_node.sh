@@ -302,7 +302,11 @@ register_node() {
 start_sync() {
     show_info "$(get_text "sync_node")"
     show_warning "Note: This will start sync in background (Примечание: Это запустит синхронизацию в фоне)"
+
+    # Change to the correct directory
+    cd /opt/netrum-lite-node
     netrum-sync
+
     show_success "$(get_text "sync_active")"
     echo ""
     show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
@@ -313,7 +317,11 @@ start_sync() {
 start_mining() {
     show_info "$(get_text "start_mining")"
     show_warning "Note: This will start mining in background (Примечание: Это запустит майнинг в фоне)"
+
+    # Change to the correct directory
+    cd /opt/netrum-lite-node
     netrum-mining
+
     show_success "$(get_text "mining_active")"
     echo ""
     show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
@@ -369,6 +377,20 @@ update_cli() {
     show_info "Updating Netrum CLI (Обновление Netrum CLI)..."
     netrum-update
     show_success "CLI updated (CLI обновлен)"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
+# Stop services
+stop_services() {
+    show_info "Stopping Netrum services (Остановка сервисов Netrum)..."
+
+    # Stop and disable services
+    sudo systemctl stop netrum-node.service 2>/dev/null || true
+    sudo systemctl disable netrum-node.service 2>/dev/null || true
+
+    show_success "Services stopped (Сервисы остановлены)"
     echo ""
     show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
     read
@@ -519,11 +541,12 @@ show_management_menu() {
         show_white "9) Remove Wallet (Удалить кошелек)"
         show_white "10) Clear Node ID (Очистить ID ноды)"
         show_white "11) Update CLI (Обновить CLI)"
-        show_white "12) $(get_text "help_commands")"
+        show_white "12) Stop Services (Остановить сервисы)"
+        show_white "13) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-12] (Выбор [0-12]): ")" choice
+        read -p "$(show_cyan "Choice [0-13] (Выбор [0-13]): ")" choice
 
         case $choice in
             1)
@@ -532,11 +555,13 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             2)
+                cd /opt/netrum-lite-node
                 netrum-sync-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             3)
+                cd /opt/netrum-lite-node
                 netrum-mining-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
@@ -576,6 +601,9 @@ show_management_menu() {
                 update_cli
                 ;;
             12)
+                stop_services
+                ;;
+            13)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
