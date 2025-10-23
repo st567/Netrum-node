@@ -656,11 +656,12 @@ show_main_menu() {
         echo ""
         show_white "1) 🚀 $(get_text "install")"
         show_white "2) ⚙️ $(get_text "manage")"
-        show_white "3) 🗑️ $(get_text "remove")"
+        show_white "3) 🔄 $(get_text "update_cli")"
+        show_white "4) 🗑️ $(get_text "remove")"
         show_white "0) ❌ $(get_text "exit")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-3] (Выбор [0-3]): ")" choice
+        read -p "$(show_cyan "Choice [0-4] (Выбор [0-4]): ")" choice
 
         case $choice in
             1)
@@ -675,6 +676,14 @@ show_main_menu() {
                 fi
                 ;;
             3)
+                if is_netrum_installed; then
+                    update_cli
+                else
+                    show_error "$(get_text "not_installed")"
+                    read -p "$(show_cyan "$(get_text "press_enter")")"
+                fi
+                ;;
+            4)
                 if is_netrum_installed; then
                     remove_netrum
                     read -p "$(show_cyan "$(get_text "press_enter")")"
