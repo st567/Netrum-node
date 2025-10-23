@@ -283,21 +283,21 @@ register_node() {
 start_sync() {
     show_info "$(get_text "sync_node")"
     netrum-sync
-    show_success "$(get_text "sync_active")")
+    show_success "$(get_text "sync_active")"
 }
 
 # Start mining
 start_mining() {
     show_info "$(get_text "start_mining")"
     netrum-mining
-    show_success "$(get_text "mining_active")")
+    show_success "$(get_text "mining_active")"
 }
 
 # Claim rewards
 claim_rewards() {
     show_info "$(get_text "claim_rewards")"
     netrum-claim
-    show_success "$(get_text "rewards_available")")
+    show_success "$(get_text "rewards_available")"
 }
 
 # View logs

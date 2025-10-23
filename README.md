@@ -28,7 +28,7 @@ This script automates the installation and management of Netrum Lite Node - a li
 
 ### 🚀 Быстрый запуск / Quick Launch
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/your-repo/netrum-node/main/netrum_node.sh)
+bash <(curl -s https://raw.githubusercontent.com/st567/Netrum-node/main/netrum_node.sh)
 ```
 
 ## 🎯 Основные функции / Main Features
