@@ -228,8 +228,8 @@ setup_netrum_repo() {
     show_info "$(get_text "cloning_repo")"
 
     # Clone repository
-    git clone https://github.com/NetrumLabs/netrum-lite-node.git /opt/netrum-lite-node
-    cd /opt/netrum-lite-node
+    git clone https://github.com/NetrumLabs/netrum-lite-node.git /root/netrum-lite-node
+    cd /root/netrum-lite-node
 
     show_info "$(get_text "installing_deps")"
     npm install
@@ -304,7 +304,7 @@ start_sync() {
     show_warning "Note: This will start sync in background (Примечание: Это запустит синхронизацию в фоне)"
 
     # Change to the correct directory
-    cd /opt/netrum-lite-node
+    cd /root/netrum-lite-node
     netrum-sync
 
     show_success "$(get_text "sync_active")"
@@ -319,7 +319,7 @@ start_mining() {
     show_warning "Note: This will start mining in background (Примечание: Это запустит майнинг в фоне)"
 
     # Change to the correct directory
-    cd /opt/netrum-lite-node
+    cd /root/netrum-lite-node
     netrum-mining
 
     show_success "$(get_text "mining_active")"
@@ -472,7 +472,7 @@ remove_netrum() {
         sudo npm unlink -g netrum 2>/dev/null || true
 
         # Remove installation directory
-        sudo rm -rf /opt/netrum-lite-node
+        sudo rm -rf /root/netrum-lite-node
 
         show_success "$(get_text "removed")"
     else
@@ -555,13 +555,13 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             2)
-                cd /opt/netrum-lite-node
+                cd /root/netrum-lite-node
                 netrum-sync-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             3)
-                cd /opt/netrum-lite-node
+                cd /root/netrum-lite-node
                 netrum-mining-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
