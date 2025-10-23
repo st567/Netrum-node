@@ -136,6 +136,11 @@ get_text() {
         "base_domain") echo "Base Domain (Base домен)" ;;
         "npt_balance") echo "NPT Balance (Баланс NPT)" ;;
         "base_balance") echo "BASE Balance (Баланс BASE)" ;;
+        "sign_register_node") echo "Sign & Register Node (Подписать и зарегистрировать ноду)" ;;
+        "remove_wallet") echo "Remove Wallet (Удалить кошелек)" ;;
+        "clear_node_id") echo "Clear Node ID (Очистить ID ноды)" ;;
+        "update_cli") echo "Update CLI (Обновить CLI)" ;;
+        "stop_services") echo "Stop Services (Остановить сервисы)" ;;
     esac
 }
 
@@ -396,6 +401,26 @@ stop_services() {
     read
 }
 
+# Sign and register node
+sign_register_node() {
+    show_info "Signing and registering node (Подпись и регистрация ноды)..."
+
+    # Sign node identity
+    show_info "Step 1: Signing node identity (Шаг 1: Подпись идентичности ноды)..."
+    netrum-node-sign
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+
+    # Register node
+    show_info "Step 2: Registering node (Шаг 2: Регистрация ноды)..."
+    netrum-node-register
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
+
 
 # Show wallet information
 show_wallet_info() {
@@ -531,22 +556,23 @@ show_management_menu() {
         show_green "$(get_text "manage")"
         echo ""
         show_white "1) $(get_text "status")"
-        show_white "2) $(get_text "sync_logs")"
-        show_white "3) $(get_text "mining_logs")"
-        show_white "4) $(get_text "earnings")"
-        show_white "5) $(get_text "claim_rewards")"
-        show_white "6) $(get_text "health_check")"
-        show_white "7) $(get_text "show_wallet")"
+        show_white "2) $(get_text "show_wallet")"
+        show_white "3) $(get_text "earnings")"
+        show_white "4) $(get_text "claim_rewards")"
+        show_white "5) $(get_text "sync_logs")"
+        show_white "6) $(get_text "mining_logs")"
+        show_white "7) $(get_text "sign_register_node")"
         show_white "8) $(get_text "export_key")"
-        show_white "9) Remove Wallet (Удалить кошелек)"
-        show_white "10) Clear Node ID (Очистить ID ноды)"
-        show_white "11) Update CLI (Обновить CLI)"
-        show_white "12) Stop Services (Остановить сервисы)"
-        show_white "13) $(get_text "help_commands")"
+        show_white "9) $(get_text "remove_wallet")"
+        show_white "10) $(get_text "clear_node_id")"
+        show_white "11) $(get_text "update_cli")"
+        show_white "12) $(get_text "stop_services")"
+        show_white "13) $(get_text "health_check")"
+        show_white "14) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-13] (Выбор [0-13]): ")" choice
+        read -p "$(show_cyan "Choice [0-14] (Выбор [0-14]): ")" choice
 
         case $choice in
             1)
@@ -555,36 +581,34 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             2)
+                show_wallet_info
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
+                ;;
+            3)
+                show_earnings
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
+                ;;
+            4)
+                claim_rewards
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
+                ;;
+            5)
                 cd /root/netrum-lite-node
                 netrum-sync-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            3)
+            6)
                 cd /root/netrum-lite-node
                 netrum-mining-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            4)
-                show_earnings
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
-                ;;
-            5)
-                claim_rewards
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
-                ;;
-            6)
-                health_check
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
-                ;;
             7)
-                show_wallet_info
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
+                sign_register_node
                 ;;
             8)
                 netrum-wallet-key
@@ -604,6 +628,11 @@ show_management_menu() {
                 stop_services
                 ;;
             13)
+                health_check
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
+                ;;
+            14)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
