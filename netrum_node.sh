@@ -253,10 +253,16 @@ setup_wallet() {
         1)
             netrum-new-wallet
             show_success "$(get_text "wallet_created")"
+            echo ""
+            show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+            read
             ;;
          2)
             netrum-import-wallet
             show_success "$(get_text "wallet_imported")"
+            echo ""
+            show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+            read
             ;;
         *)
             show_error "Invalid choice (Неверный выбор)"
@@ -269,6 +275,15 @@ setup_wallet() {
 check_basename() {
     show_info "$(get_text "check_basename")"
     netrum-check-basename
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
+# Sign node identity
+sign_node() {
+    show_info "Signing node identity (Подпись идентичности ноды)..."
+    netrum-node-sign
     echo ""
     show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
     read
@@ -289,6 +304,9 @@ start_sync() {
     show_warning "Note: This will start sync in background (Примечание: Это запустит синхронизацию в фоне)"
     netrum-sync
     show_success "$(get_text "sync_active")"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
 }
 
 # Start mining
@@ -297,6 +315,9 @@ start_mining() {
     show_warning "Note: This will start mining in background (Примечание: Это запустит майнинг в фоне)"
     netrum-mining
     show_success "$(get_text "mining_active")"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
 }
 
 # Claim rewards
@@ -304,24 +325,55 @@ claim_rewards() {
     show_info "$(get_text "claim_rewards")"
     netrum-claim
     show_success "$(get_text "rewards_available")"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
 }
 
-# View logs
-view_logs() {
-    if is_node_running; then
-        show_info "📋 Netrum Lite Node Logs (Логи Netrum Lite Node):"
-        show_yellow "═══════════════════════════════════════════════════════════════"
-        netrum-system
-        show_yellow "═══════════════════════════════════════════════════════════════"
-        echo ""
-        show_info "For sync logs (Для просмотра логов синхронизации):"
-        show_cyan "netrum-sync-log"
-        show_info "For mining logs (Для просмотра логов майнинга):"
-        show_cyan "netrum-mining-log"
+# Remove wallet
+remove_wallet() {
+    show_warning "⚠️ Remove Wallet (Удалить кошелек)"
+    show_warning "This will permanently delete your wallet files! (Это навсегда удалит файлы вашего кошелька!)"
+    read -p "$(show_cyan "Are you sure? [y/N] (Вы уверены? [y/N]): ")" confirm
+
+    if [[ $confirm =~ ^[Yy]$ ]]; then
+        netrum-wallet-remove
+        show_success "Wallet removed (Кошелек удален)"
     else
-        show_error "Node is not running (Нода не запущена)"
+        show_info "Operation cancelled (Операция отменена)"
     fi
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
 }
+
+# Clear Node ID
+clear_node_id() {
+    show_warning "⚠️ Clear Node ID (Очистить ID ноды)"
+    show_warning "This will clear your current Node ID! (Это очистит ваш текущий ID ноды!)"
+    read -p "$(show_cyan "Are you sure? [y/N] (Вы уверены? [y/N]): ")" confirm
+
+    if [[ $confirm =~ ^[Yy]$ ]]; then
+        netrum-node-id-remove
+        show_success "Node ID cleared (ID ноды очищен)"
+    else
+        show_info "Operation cancelled (Операция отменена)"
+    fi
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
+# Update CLI
+update_cli() {
+    show_info "Updating Netrum CLI (Обновление Netrum CLI)..."
+    netrum-update
+    show_success "CLI updated (CLI обновлен)"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
 
 # Show wallet information
 show_wallet_info() {
@@ -432,13 +484,15 @@ main_installation() {
 
     echo ""
     show_warning "Next Steps (Следующие шаги):"
-    show_white "1. Complete wallet setup manually (Завершите настройку кошелька вручную):"
+    show_white "1. Check your wallet (Проверьте ваш кошелек):"
     show_cyan "   netrum-wallet"
     show_white "2. Check your Base domain (Проверьте ваш Base домен):"
     show_cyan "   netrum-check-basename"
-    show_white "3. Register your node (Зарегистрируйте вашу ноду):"
+    show_white "3. Sign your node identity (Подпишите идентичность ноды):"
+    show_cyan "   netrum-node-sign"
+    show_white "4. Register your node (Зарегистрируйте вашу ноду):"
     show_cyan "   netrum-node-register"
-    show_white "4. Start sync and mining (Запустите синхронизацию и майнинг):"
+    show_white "5. Start sync and mining (Запустите синхронизацию и майнинг):"
     show_cyan "   netrum-sync"
     show_cyan "   netrum-mining"
     echo ""
@@ -455,19 +509,21 @@ show_management_menu() {
         show_green "$(get_text "manage")"
         echo ""
         show_white "1) $(get_text "status")"
-        show_white "2) $(get_text "logs")"
-        show_white "3) $(get_text "sync_logs")"
-        show_white "4) $(get_text "mining_logs")"
-        show_white "5) $(get_text "earnings")"
-        show_white "6) $(get_text "claim_rewards")"
-        show_white "7) $(get_text "health_check")"
-        show_white "8) $(get_text "show_wallet")"
-        show_white "9) $(get_text "export_key")"
-        show_white "10) $(get_text "help_commands")"
+        show_white "2) $(get_text "sync_logs")"
+        show_white "3) $(get_text "mining_logs")"
+        show_white "4) $(get_text "earnings")"
+        show_white "5) $(get_text "claim_rewards")"
+        show_white "6) $(get_text "health_check")"
+        show_white "7) $(get_text "show_wallet")"
+        show_white "8) $(get_text "export_key")"
+        show_white "9) Remove Wallet (Удалить кошелек)"
+        show_white "10) Clear Node ID (Очистить ID ноды)"
+        show_white "11) Update CLI (Обновить CLI)"
+        show_white "12) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-10] (Выбор [0-10]): ")" choice
+        read -p "$(show_cyan "Choice [0-12] (Выбор [0-12]): ")" choice
 
         case $choice in
             1)
@@ -476,46 +532,50 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             2)
-                view_logs
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
-                ;;
-            3)
                 netrum-sync-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            4)
+            3)
                 netrum-mining-log
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            5)
+            4)
                 show_earnings
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            6)
+            5)
                 claim_rewards
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            7)
+            6)
                 health_check
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            8)
+            7)
                 show_wallet_info
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            9)
+            8)
                 netrum-wallet-key
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
+            9)
+                remove_wallet
+                ;;
             10)
+                clear_node_id
+                ;;
+            11)
+                update_cli
+                ;;
+            12)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
