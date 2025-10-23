@@ -269,13 +269,18 @@ setup_wallet() {
 check_basename() {
     show_info "$(get_text "check_basename")"
     netrum-check-basename
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
 }
 
 # Register node
 register_node() {
     show_info "$(get_text "register_node")"
     netrum-node-register
-    show_success "$(get_text "node_registered")"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
 }
 
 # Start sync
@@ -424,15 +429,20 @@ main_installation() {
     install_nodejs
     setup_netrum_repo
     setup_wallet
-    check_basename
-    register_node
 
     echo ""
-    show_warning "Important (Важно):"
-    show_white "• Complete wallet setup and node registration first (Сначала завершите настройку кошелька и регистрацию ноды)"
-    show_white "• Then use management menu to start sync and mining (Затем используйте меню управления для запуска синхронизации и майнинга)"
-    show_white "• Use 'netrum-sync' and 'netrum-mining' commands manually (Используйте команды 'netrum-sync' и 'netrum-mining' вручную)"
-    show_white "• Rewards can be claimed every 24 hours (Награды можно получать каждые 24 часа)"
+    show_warning "Next Steps (Следующие шаги):"
+    show_white "1. Complete wallet setup manually (Завершите настройку кошелька вручную):"
+    show_cyan "   netrum-wallet"
+    show_white "2. Check your Base domain (Проверьте ваш Base домен):"
+    show_cyan "   netrum-check-basename"
+    show_white "3. Register your node (Зарегистрируйте вашу ноду):"
+    show_cyan "   netrum-node-register"
+    show_white "4. Start sync and mining (Запустите синхронизацию и майнинг):"
+    show_cyan "   netrum-sync"
+    show_cyan "   netrum-mining"
+    echo ""
+    show_info "Use management menu for easy access to all commands (Используйте меню управления для легкого доступа ко всем командам)"
     echo ""
 
     read -p "$(show_cyan "$(get_text "press_enter")")"
