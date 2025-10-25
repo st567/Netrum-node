@@ -666,19 +666,19 @@ show_management_menu() {
         echo ""
         show_white "1) $(get_text "status")"
         show_white "2) $(get_text "show_wallet")"
-        show_white "3) $(get_text "earnings")"
-        show_white "4) $(get_text "claim_rewards")"
-        show_white "5) $(get_text "start_mining")"
-        show_white "6) $(get_text "sync_logs")"
+        show_white "3) $(get_text "check_base_domain")"
+        show_white "4) $(get_text "sign_register_node")"
+        show_white "5) $(get_text "sync_logs")"
+        show_white "6) $(get_text "start_mining")"
         show_white "7) $(get_text "mining_logs")"
-        show_white "8) $(get_text "sign_register_node")"
-        show_white "9) $(get_text "export_key")"
-        show_white "10) $(get_text "remove_wallet")"
-        show_white "11) $(get_text "clear_node_id")"
-        show_white "12) $(get_text "check_base_domain")"
+        show_white "8) $(get_text "earnings")"
+        show_white "9) $(get_text "claim_rewards")"
+        show_white "10) $(get_text "export_key")"
+        show_white "11) $(get_text "remove_wallet")"
+        show_white "12) $(get_text "clear_node_id")"
         show_white "13) $(get_text "stop_services")"
-        show_white "14) $(get_text "fix_permissions")"
-        show_white "15) $(get_text "health_check")"
+        show_white "14) $(get_text "health_check")"
+        show_white "15) $(get_text "fix_permissions")"
         show_white "16) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
@@ -697,19 +697,12 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             3)
-                show_earnings
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
+                check_basename
                 ;;
             4)
-                claim_rewards
-                echo ""
-                read -p "$(show_yellow "$(get_text "press_enter")")"
+                sign_register_node
                 ;;
             5)
-                start_mining
-                ;;
-            6)
                 cd /root/netrum-lite-node
 
                 # Check if netrum-sync-log command exists and is executable
@@ -728,6 +721,9 @@ show_management_menu() {
 
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
+                ;;
+            6)
+                start_mining
                 ;;
             7)
                 cd /root/netrum-lite-node
@@ -750,32 +746,36 @@ show_management_menu() {
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             8)
-                sign_register_node
+                show_earnings
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             9)
-                netrum-wallet-key
+                claim_rewards
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             10)
-                remove_wallet
+                netrum-wallet-key
+                echo ""
+                read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
             11)
-                clear_node_id
+                remove_wallet
                 ;;
             12)
-                check_basename
+                clear_node_id
                 ;;
             13)
                 stop_services
                 ;;
             14)
-                fix_permissions
-                ;;
-            15)
                 health_check
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
+                ;;
+            15)
+                fix_permissions
                 ;;
             16)
                 show_help_commands
