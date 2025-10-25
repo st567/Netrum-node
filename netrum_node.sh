@@ -143,6 +143,7 @@ get_text() {
         "stop_services") echo "Stop Services (Остановить сервисы)" ;;
         "start_mining") echo "Start Mining (Запустить майнинг)" ;;
         "check_base_domain") echo "Check Base Domain (Проверить Base домен)" ;;
+        "fix_permissions") echo "Fix Permissions (Исправить права доступа)" ;;
     esac
 }
 
@@ -309,6 +310,59 @@ check_basename() {
     echo ""
     show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
     read
+}
+
+# Fix permissions for Netrum CLI commands
+fix_permissions() {
+    show_info "$(get_text "fix_permissions")"
+
+    # Find all netrum commands in /usr/local/bin
+    NETRUM_COMMANDS=$(find /usr/local/bin -name "netrum*" 2>/dev/null)
+
+    if [ -z "$NETRUM_COMMANDS" ]; then
+        show_error "No Netrum commands found in /usr/local/bin (Команды Netrum не найдены в /usr/local/bin)"
+        show_info "Trying to find in other locations... (Попытка найти в других местах...)"
+
+        # Try to find in npm global bin
+        if command -v npm &> /dev/null; then
+            NPM_BIN=$(npm config get prefix)/bin
+            NETRUM_COMMANDS=$(find "$NPM_BIN" -name "netrum*" 2>/dev/null)
+        fi
+    fi
+
+    if [ -z "$NETRUM_COMMANDS" ]; then
+        show_error "No Netrum commands found (Команды Netrum не найдены)"
+        show_info "Make sure Netrum CLI is properly installed (Убедитесь, что Netrum CLI правильно установлен)"
+        return 1
+    fi
+
+    show_info "Found Netrum commands (Найдены команды Netrum):"
+    echo "$NETRUM_COMMANDS"
+    echo ""
+
+    # Fix permissions for each command
+    for cmd in $NETRUM_COMMANDS; do
+        if [ -f "$cmd" ]; then
+            show_info "Fixing permissions for: $cmd"
+            if chmod +x "$cmd"; then
+                show_success "Permissions fixed for: $cmd"
+            else
+                show_error "Failed to fix permissions for: $cmd"
+                show_info "Trying with sudo..."
+                if sudo chmod +x "$cmd"; then
+                    show_success "Permissions fixed with sudo for: $cmd"
+                else
+                    show_error "Failed to fix permissions even with sudo for: $cmd"
+                fi
+            fi
+        fi
+    done
+
+    echo ""
+    show_success "Permission fix completed (Исправление прав доступа завершено)"
+    show_info "Try running your Netrum commands now (Попробуйте запустить команды Netrum сейчас)"
+    echo ""
+    read -p "$(show_yellow "$(get_text "press_enter")")"
 }
 
 # Sign node identity
@@ -623,12 +677,13 @@ show_management_menu() {
         show_white "11) $(get_text "clear_node_id")"
         show_white "12) $(get_text "check_base_domain")"
         show_white "13) $(get_text "stop_services")"
-        show_white "14) $(get_text "health_check")"
-        show_white "15) $(get_text "help_commands")"
+        show_white "14) $(get_text "fix_permissions")"
+        show_white "15) $(get_text "health_check")"
+        show_white "16) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-15] (Выбор [0-15]): ")" choice
+        read -p "$(show_cyan "Choice [0-16] (Выбор [0-16]): ")" choice
 
         case $choice in
             1)
@@ -715,11 +770,14 @@ show_management_menu() {
                 stop_services
                 ;;
             14)
+                fix_permissions
+                ;;
+            15)
                 health_check
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            15)
+            16)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
