@@ -144,9 +144,6 @@ get_text() {
         "start_mining") echo "Start Mining (Запустить майнинг)" ;;
         "check_base_domain") echo "Check Base Domain (Проверить Base домен)" ;;
         "fix_permissions") echo "Fix Permissions (Исправить права доступа)" ;;
-        "diagnose_install") echo "Diagnose Installation (Диагностика установки)" ;;
-        "recover_install") echo "Recover Installation (Восстановить установку)" ;;
-        "manual_install") echo "Manual Install Dependencies (Ручная установка зависимостей)" ;;
     esac
 }
 
@@ -236,8 +233,15 @@ install_nodejs() {
             show_success "Node.js v20+ already installed (Node.js v20+ уже установлен)"
             return 0
         else
-            show_info "Current Node.js version: $(node -v) (Текущая версия Node.js: $(node -v))"
-            show_info "Upgrading to Node.js v20... (Обновление до Node.js v20...)"
+            show_warning "Current Node.js version: $(node -v) (Текущая версия Node.js: $(node -v))"
+            show_warning "Node.js v20+ is required for Netrum (Для Netrum требуется Node.js v20+)"
+            show_info "Removing old Node.js and installing v20... (Удаление старой версии Node.js и установка v20...)"
+
+            # Remove old Node.js
+            show_info "Removing old Node.js... (Удаление старой версии Node.js...)"
+            sudo apt remove -y nodejs npm 2>/dev/null || true
+            sudo apt purge -y nodejs npm 2>/dev/null || true
+            sudo apt autoremove -y 2>/dev/null || true
         fi
     fi
 
@@ -498,227 +502,6 @@ fix_permissions() {
     read -p "$(show_yellow "$(get_text "press_enter")")"
 }
 
-# Diagnose installation issues
-diagnose_install() {
-    show_info "$(get_text "diagnose_install")"
-    echo ""
-
-    # System information
-    show_white "=== System Information (Информация о системе) ==="
-    show_info "OS: $(lsb_release -d 2>/dev/null | cut -f2 || echo "Unknown")"
-    show_info "Kernel: $(uname -r)"
-    show_info "Architecture: $(uname -m)"
-    show_info "Memory: $(free -h | grep Mem | awk '{print $2}')"
-    show_info "Disk space: $(df -h / | tail -1 | awk '{print $4}')"
-    echo ""
-
-    # Node.js information
-    show_white "=== Node.js Information (Информация о Node.js) ==="
-    if command -v node &> /dev/null; then
-        show_success "Node.js installed: $(node -v)"
-        show_info "Node.js path: $(which node)"
-    else
-        show_error "Node.js not found"
-    fi
-
-    if command -v npm &> /dev/null; then
-        show_success "npm installed: $(npm -v)"
-        show_info "npm path: $(which npm)"
-    else
-        show_error "npm not found"
-    fi
-    echo ""
-
-    # Netrum installation status
-    show_white "=== Netrum Installation Status (Статус установки Netrum) ==="
-    if [ -d "/root/netrum-lite-node" ]; then
-        show_success "Netrum directory exists: /root/netrum-lite-node"
-        show_info "Directory size: $(du -sh /root/netrum-lite-node 2>/dev/null | cut -f1)"
-
-        if [ -f "/root/netrum-lite-node/package.json" ]; then
-            show_success "package.json found"
-        else
-            show_error "package.json not found"
-        fi
-
-        if [ -d "/root/netrum-lite-node/node_modules" ]; then
-            show_success "node_modules directory exists"
-            show_info "node_modules size: $(du -sh /root/netrum-lite-node/node_modules 2>/dev/null | cut -f1)"
-        else
-            show_error "node_modules directory not found"
-        fi
-    else
-        show_error "Netrum directory not found: /root/netrum-lite-node"
-    fi
-    echo ""
-
-    # CLI commands status
-    show_white "=== CLI Commands Status (Статус CLI команд) ==="
-    NETRUM_COMMANDS=("netrum" "netrum-wallet" "netrum-sync" "netrum-mining" "netrum-node-sign" "netrum-node-register")
-    for cmd in "${NETRUM_COMMANDS[@]}"; do
-        if command -v "$cmd" &> /dev/null; then
-            show_success "$cmd: $(which $cmd)"
-        else
-            show_error "$cmd: not found"
-        fi
-    done
-    echo ""
-
-    # Network connectivity
-    show_white "=== Network Connectivity (Сетевая связность) ==="
-    if ping -c 1 github.com &> /dev/null; then
-        show_success "GitHub connectivity: OK"
-    else
-        show_error "GitHub connectivity: FAILED"
-    fi
-
-    if ping -c 1 registry.npmjs.org &> /dev/null; then
-        show_success "npm registry connectivity: OK"
-    else
-        show_error "npm registry connectivity: FAILED"
-    fi
-    echo ""
-
-    read -p "$(show_yellow "$(get_text "press_enter")")"
-}
-
-# Recover installation
-recover_install() {
-    show_info "$(get_text "recover_install")"
-    echo ""
-
-    show_warning "This will attempt to recover a failed installation (Это попытается восстановить неудачную установку)"
-    read -p "$(show_cyan "Continue? (y/N) (Продолжить? (y/N)): ")" confirm_recover
-
-    if [[ ! $confirm_recover =~ ^[Yy]$ ]]; then
-        show_warning "Recovery cancelled (Восстановление отменено)"
-        return
-    fi
-
-    show_info "Starting recovery process... (Запуск процесса восстановления...)"
-
-    # Step 1: Clean up existing installation
-    show_info "Step 1: Cleaning up existing installation (Шаг 1: Очистка существующей установки)..."
-    if [ -d "/root/netrum-lite-node" ]; then
-        show_info "Removing existing Netrum directory... (Удаление существующей директории Netrum...)"
-        sudo rm -rf /root/netrum-lite-node
-        show_success "Existing directory removed (Существующая директория удалена)"
-    fi
-
-    # Step 2: Reinstall Node.js if needed
-    show_info "Step 2: Checking Node.js installation (Шаг 2: Проверка установки Node.js)..."
-    if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
-        show_info "Reinstalling Node.js... (Переустановка Node.js...)"
-        install_nodejs
-    else
-        show_success "Node.js is already installed (Node.js уже установлен)"
-    fi
-
-    # Step 3: Reinstall Netrum
-    show_info "Step 3: Reinstalling Netrum (Шаг 3: Переустановка Netrum)..."
-    setup_netrum_repo
-
-    # Step 4: Fix permissions (only if Netrum is installed)
-    if [ -d "/root/netrum-lite-node" ] && [ -d "/root/netrum-lite-node/node_modules" ]; then
-        show_info "Step 4: Fixing permissions (Шаг 4: Исправление прав доступа)..."
-        fix_permissions
-    else
-        show_warning "Step 4: Skipping permission fix - Netrum not properly installed (Шаг 4: Пропуск исправления прав - Netrum не установлен правильно)"
-    fi
-
-    show_success "Recovery completed! (Восстановление завершено!)"
-    show_info "Try running the installation again or use the management menu (Попробуйте запустить установку снова или используйте меню управления)"
-    echo ""
-    read -p "$(show_yellow "$(get_text "press_enter")")"
-}
-
-# Manual install dependencies
-manual_install() {
-    show_info "$(get_text "manual_install")"
-    echo ""
-
-    # Check if Netrum directory exists
-    if [ ! -d "/root/netrum-lite-node" ]; then
-        show_error "Netrum directory not found: /root/netrum-lite-node (Директория Netrum не найдена: /root/netrum-lite-node)"
-        show_info "Please run the installation first (Пожалуйста, сначала запустите установку)"
-        return 1
-    fi
-
-    # Check if package.json exists
-    if [ ! -f "/root/netrum-lite-node/package.json" ]; then
-        show_error "package.json not found in /root/netrum-lite-node (package.json не найден в /root/netrum-lite-node)"
-        show_info "Please run the installation first (Пожалуйста, сначала запустите установку)"
-        return 1
-    fi
-
-    show_info "Changing to Netrum directory... (Переход в директорию Netrum...)"
-    cd /root/netrum-lite-node
-
-    show_info "Current directory: $(pwd) (Текущая директория: $(pwd))"
-    show_info "Node.js version: $(node -v) (Версия Node.js: $(node -v))"
-    show_info "npm version: $(npm -v) (Версия npm: $(npm -v))"
-    echo ""
-
-    show_warning "This will try multiple methods to install dependencies (Это попробует несколько методов для установки зависимостей)"
-    read -p "$(show_cyan "Continue? (y/N) (Продолжить? (y/N)): ")" confirm_manual
-
-    if [[ ! $confirm_manual =~ ^[Yy]$ ]]; then
-        show_warning "Manual installation cancelled (Ручная установка отменена)"
-        return
-    fi
-
-    # Method 1: Standard npm install
-    show_info "Method 1: Standard npm install (Метод 1: Стандартная установка npm)..."
-    if npm install 2>/dev/null; then
-        show_success "Dependencies installed successfully with standard method (Зависимости успешно установлены стандартным методом)"
-    else
-        show_warning "Standard method failed, trying alternatives... (Стандартный метод не удался, пробуем альтернативы...)"
-
-        # Method 2: Clear cache and retry
-        show_info "Method 2: Clearing cache and retrying (Метод 2: Очистка кэша и повторная попытка)..."
-        npm cache clean --force 2>/dev/null || true
-        if npm install 2>/dev/null; then
-            show_success "Dependencies installed after cache clear (Зависимости установлены после очистки кэша)"
-        else
-            # Method 3: Force install
-            show_info "Method 3: Force install (Метод 3: Принудительная установка)..."
-            if npm install --force 2>/dev/null; then
-                show_success "Dependencies installed with --force (Зависимости установлены с --force)"
-            else
-                # Method 4: Legacy peer deps
-                show_info "Method 4: Legacy peer deps (Метод 4: Устаревшие peer зависимости)..."
-                if npm install --legacy-peer-deps 2>/dev/null; then
-                    show_success "Dependencies installed with --legacy-peer-deps (Зависимости установлены с --legacy-peer-deps)"
-                else
-                    # Method 5: Both flags
-                    show_info "Method 5: Both flags (Метод 5: Оба флага)..."
-                    if npm install --force --legacy-peer-deps 2>/dev/null; then
-                        show_success "Dependencies installed with both flags (Зависимости установлены с обоими флагами)"
-                    else
-                        show_error "All npm methods failed (Все методы npm не удались)"
-                        show_info "Try installing yarn and using it: npm install -g yarn && yarn install (Попробуйте установить yarn и использовать его: npm install -g yarn && yarn install)"
-                        return 1
-                    fi
-                fi
-            fi
-        fi
-    fi
-
-    # Link CLI if dependencies were installed
-    if [ -d "node_modules" ]; then
-        show_info "Linking CLI commands... (Связывание CLI команд...)"
-        if sudo npm link; then
-            show_success "CLI commands linked successfully (CLI команды успешно связаны)"
-        else
-            show_warning "Failed to link CLI commands (Не удалось связать CLI команды)"
-        fi
-    fi
-
-    show_success "Manual installation completed! (Ручная установка завершена!)"
-    echo ""
-    read -p "$(show_yellow "$(get_text "press_enter")")"
-}
-
 # Sign node identity
 sign_node() {
     show_info "Signing node identity (Подпись идентичности ноды)..."
@@ -962,35 +745,77 @@ main_installation() {
 
     show_info "$(get_text "installing")"
 
-    # Update system
-    update_system
-    if [ $? -ne 0 ]; then
-        show_error "System update failed (Обновление системы не удалось)"
+    # Step 1: Clone repository
+    show_info "Step 1: Cloning repository (Шаг 1: Клонирование репозитория)..."
+    if git clone https://github.com/NetrumLabs/netrum-lite-node.git /root/netrum-lite-node; then
+        show_success "Repository cloned successfully (Репозиторий успешно клонирован)"
+    else
+        show_error "Failed to clone repository (Не удалось клонировать репозиторий)"
         return 1
     fi
 
-    # Install packages
-    install_packages
-    if [ $? -ne 0 ]; then
-        show_error "Package installation failed (Установка пакетов не удалась)"
+    # Step 2: Change to directory
+    show_info "Step 2: Changing to directory (Шаг 2: Переход в директорию)..."
+    cd /root/netrum-lite-node
+    show_success "Changed to /root/netrum-lite-node (Перешли в /root/netrum-lite-node)"
+
+    # Step 3: Update system and install packages
+    show_info "Step 3: Updating system and installing packages (Шаг 3: Обновление системы и установка пакетов)..."
+    if sudo apt update && sudo apt install -y curl bc jq speedtest-cli nodejs npm; then
+        show_success "Packages installed successfully (Пакеты успешно установлены)"
+    else
+        show_error "Failed to install packages (Не удалось установить пакеты)"
         return 1
     fi
 
-    # Install Node.js
-    install_nodejs
-    if [ $? -ne 0 ]; then
-        show_error "Node.js installation failed (Установка Node.js не удалась)"
+    # Step 4: Check Node.js version
+    show_info "Step 4: Checking Node.js version (Шаг 4: Проверка версии Node.js)..."
+    NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+    show_info "Current Node.js version: $(node -v) (Текущая версия Node.js: $(node -v))"
+
+    if [ "$NODE_VERSION" -lt 20 ]; then
+        show_warning "Node.js version is less than 20, upgrading... (Версия Node.js меньше 20, обновляем...)"
+
+        # Remove old Node.js
+        sudo apt remove -y nodejs npm 2>/dev/null || true
+        sudo apt purge -y nodejs npm 2>/dev/null || true
+        sudo apt autoremove -y 2>/dev/null || true
+
+        # Install Node.js v20
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt install -y nodejs
+
+        # Verify installation
+        if command -v node &> /dev/null; then
+            show_success "Node.js upgraded to: $(node -v) (Node.js обновлен до: $(node -v))"
+        else
+            show_error "Failed to upgrade Node.js (Не удалось обновить Node.js)"
+            return 1
+        fi
+    else
+        show_success "Node.js version is sufficient (Версия Node.js достаточна)"
+    fi
+
+    # Step 5: Install dependencies
+    show_info "Step 5: Installing dependencies (Шаг 5: Установка зависимостей)..."
+    if npm install; then
+        show_success "Dependencies installed successfully (Зависимости успешно установлены)"
+    else
+        show_error "Failed to install dependencies (Не удалось установить зависимости)"
         return 1
     fi
 
-    # Setup Netrum repository
-    setup_netrum_repo
-    if [ $? -ne 0 ]; then
-        show_error "Netrum repository setup failed (Настройка репозитория Netrum не удалась)"
+    # Step 6: Link CLI
+    show_info "Step 6: Linking CLI (Шаг 6: Связывание CLI)..."
+    if sudo npm link; then
+        show_success "CLI linked successfully (CLI успешно связан)"
+    else
+        show_error "Failed to link CLI (Не удалось связать CLI)"
         return 1
     fi
 
-    # Setup wallet
+    # Step 7: Setup wallet
+    show_info "Step 7: Setting up wallet (Шаг 7: Настройка кошелька)..."
     setup_wallet
     if [ $? -ne 0 ]; then
         show_error "Wallet setup failed (Настройка кошелька не удалась)"
@@ -1161,14 +986,11 @@ show_main_menu() {
         show_white "1) 🚀 $(get_text "install")"
         show_white "2) ⚙️ $(get_text "manage")"
         show_white "3) 🔄 $(get_text "update_cli")"
-        show_white "4) 🔍 $(get_text "diagnose_install")"
-        show_white "5) 🛠️ $(get_text "recover_install")"
-        show_white "6) 🔧 $(get_text "manual_install")"
-        show_white "7) 🗑️ $(get_text "remove")"
+        show_white "4) 🗑️ $(get_text "remove")"
         show_white "0) ❌ $(get_text "exit")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-7] (Выбор [0-7]): ")" choice
+        read -p "$(show_cyan "Choice [0-4] (Выбор [0-4]): ")" choice
 
         case $choice in
             1)
@@ -1191,15 +1013,6 @@ show_main_menu() {
                 fi
                 ;;
             4)
-                diagnose_install
-                ;;
-            5)
-                recover_install
-                ;;
-            6)
-                manual_install
-                ;;
-            7)
                 if is_netrum_installed; then
                     remove_netrum
                     read -p "$(show_cyan "$(get_text "press_enter")")"
