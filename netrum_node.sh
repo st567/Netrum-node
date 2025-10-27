@@ -146,6 +146,7 @@ get_text() {
         "fix_permissions") echo "Fix Permissions (Исправить права доступа)" ;;
         "diagnose_install") echo "Diagnose Installation (Диагностика установки)" ;;
         "recover_install") echo "Recover Installation (Восстановить установку)" ;;
+        "manual_install") echo "Manual Install Dependencies (Ручная установка зависимостей)" ;;
     esac
 }
 
@@ -436,6 +437,12 @@ check_basename() {
 fix_permissions() {
     show_info "$(get_text "fix_permissions")"
 
+    # Check if we're in a valid directory
+    if ! pwd >/dev/null 2>&1; then
+        show_error "Current directory is invalid, changing to /root (Текущая директория недействительна, переходим в /root)"
+        cd /root
+    fi
+
     # Find all netrum commands in /usr/local/bin
     NETRUM_COMMANDS=$(find /usr/local/bin -name "netrum*" 2>/dev/null)
 
@@ -445,14 +452,20 @@ fix_permissions() {
 
         # Try to find in npm global bin
         if command -v npm &> /dev/null; then
-            NPM_BIN=$(npm config get prefix)/bin
-            NETRUM_COMMANDS=$(find "$NPM_BIN" -name "netrum*" 2>/dev/null)
+            NPM_BIN=$(npm config get prefix 2>/dev/null)/bin
+            if [ -d "$NPM_BIN" ]; then
+                NETRUM_COMMANDS=$(find "$NPM_BIN" -name "netrum*" 2>/dev/null)
+            fi
         fi
+
+        # Try to find in /usr/bin
+        NETRUM_COMMANDS="$NETRUM_COMMANDS $(find /usr/bin -name "netrum*" 2>/dev/null)"
     fi
 
     if [ -z "$NETRUM_COMMANDS" ]; then
         show_error "No Netrum commands found (Команды Netrum не найдены)"
         show_info "Make sure Netrum CLI is properly installed (Убедитесь, что Netrum CLI правильно установлен)"
+        show_info "Try running the installation first (Попробуйте сначала запустить установку)"
         return 1
     fi
 
@@ -605,12 +618,103 @@ recover_install() {
     show_info "Step 3: Reinstalling Netrum (Шаг 3: Переустановка Netrum)..."
     setup_netrum_repo
 
-    # Step 4: Fix permissions
-    show_info "Step 4: Fixing permissions (Шаг 4: Исправление прав доступа)..."
-    fix_permissions
+    # Step 4: Fix permissions (only if Netrum is installed)
+    if [ -d "/root/netrum-lite-node" ] && [ -d "/root/netrum-lite-node/node_modules" ]; then
+        show_info "Step 4: Fixing permissions (Шаг 4: Исправление прав доступа)..."
+        fix_permissions
+    else
+        show_warning "Step 4: Skipping permission fix - Netrum not properly installed (Шаг 4: Пропуск исправления прав - Netrum не установлен правильно)"
+    fi
 
     show_success "Recovery completed! (Восстановление завершено!)"
     show_info "Try running the installation again or use the management menu (Попробуйте запустить установку снова или используйте меню управления)"
+    echo ""
+    read -p "$(show_yellow "$(get_text "press_enter")")"
+}
+
+# Manual install dependencies
+manual_install() {
+    show_info "$(get_text "manual_install")"
+    echo ""
+
+    # Check if Netrum directory exists
+    if [ ! -d "/root/netrum-lite-node" ]; then
+        show_error "Netrum directory not found: /root/netrum-lite-node (Директория Netrum не найдена: /root/netrum-lite-node)"
+        show_info "Please run the installation first (Пожалуйста, сначала запустите установку)"
+        return 1
+    fi
+
+    # Check if package.json exists
+    if [ ! -f "/root/netrum-lite-node/package.json" ]; then
+        show_error "package.json not found in /root/netrum-lite-node (package.json не найден в /root/netrum-lite-node)"
+        show_info "Please run the installation first (Пожалуйста, сначала запустите установку)"
+        return 1
+    fi
+
+    show_info "Changing to Netrum directory... (Переход в директорию Netrum...)"
+    cd /root/netrum-lite-node
+
+    show_info "Current directory: $(pwd) (Текущая директория: $(pwd))"
+    show_info "Node.js version: $(node -v) (Версия Node.js: $(node -v))"
+    show_info "npm version: $(npm -v) (Версия npm: $(npm -v))"
+    echo ""
+
+    show_warning "This will try multiple methods to install dependencies (Это попробует несколько методов для установки зависимостей)"
+    read -p "$(show_cyan "Continue? (y/N) (Продолжить? (y/N)): ")" confirm_manual
+
+    if [[ ! $confirm_manual =~ ^[Yy]$ ]]; then
+        show_warning "Manual installation cancelled (Ручная установка отменена)"
+        return
+    fi
+
+    # Method 1: Standard npm install
+    show_info "Method 1: Standard npm install (Метод 1: Стандартная установка npm)..."
+    if npm install 2>/dev/null; then
+        show_success "Dependencies installed successfully with standard method (Зависимости успешно установлены стандартным методом)"
+    else
+        show_warning "Standard method failed, trying alternatives... (Стандартный метод не удался, пробуем альтернативы...)"
+
+        # Method 2: Clear cache and retry
+        show_info "Method 2: Clearing cache and retrying (Метод 2: Очистка кэша и повторная попытка)..."
+        npm cache clean --force 2>/dev/null || true
+        if npm install 2>/dev/null; then
+            show_success "Dependencies installed after cache clear (Зависимости установлены после очистки кэша)"
+        else
+            # Method 3: Force install
+            show_info "Method 3: Force install (Метод 3: Принудительная установка)..."
+            if npm install --force 2>/dev/null; then
+                show_success "Dependencies installed with --force (Зависимости установлены с --force)"
+            else
+                # Method 4: Legacy peer deps
+                show_info "Method 4: Legacy peer deps (Метод 4: Устаревшие peer зависимости)..."
+                if npm install --legacy-peer-deps 2>/dev/null; then
+                    show_success "Dependencies installed with --legacy-peer-deps (Зависимости установлены с --legacy-peer-deps)"
+                else
+                    # Method 5: Both flags
+                    show_info "Method 5: Both flags (Метод 5: Оба флага)..."
+                    if npm install --force --legacy-peer-deps 2>/dev/null; then
+                        show_success "Dependencies installed with both flags (Зависимости установлены с обоими флагами)"
+                    else
+                        show_error "All npm methods failed (Все методы npm не удались)"
+                        show_info "Try installing yarn and using it: npm install -g yarn && yarn install (Попробуйте установить yarn и использовать его: npm install -g yarn && yarn install)"
+                        return 1
+                    fi
+                fi
+            fi
+        fi
+    fi
+
+    # Link CLI if dependencies were installed
+    if [ -d "node_modules" ]; then
+        show_info "Linking CLI commands... (Связывание CLI команд...)"
+        if sudo npm link; then
+            show_success "CLI commands linked successfully (CLI команды успешно связаны)"
+        else
+            show_warning "Failed to link CLI commands (Не удалось связать CLI команды)"
+        fi
+    fi
+
+    show_success "Manual installation completed! (Ручная установка завершена!)"
     echo ""
     read -p "$(show_yellow "$(get_text "press_enter")")"
 }
@@ -1059,11 +1163,12 @@ show_main_menu() {
         show_white "3) 🔄 $(get_text "update_cli")"
         show_white "4) 🔍 $(get_text "diagnose_install")"
         show_white "5) 🛠️ $(get_text "recover_install")"
-        show_white "6) 🗑️ $(get_text "remove")"
+        show_white "6) 🔧 $(get_text "manual_install")"
+        show_white "7) 🗑️ $(get_text "remove")"
         show_white "0) ❌ $(get_text "exit")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-6] (Выбор [0-6]): ")" choice
+        read -p "$(show_cyan "Choice [0-7] (Выбор [0-7]): ")" choice
 
         case $choice in
             1)
@@ -1092,6 +1197,9 @@ show_main_menu() {
                 recover_install
                 ;;
             6)
+                manual_install
+                ;;
+            7)
                 if is_netrum_installed; then
                     remove_netrum
                     read -p "$(show_cyan "$(get_text "press_enter")")"
