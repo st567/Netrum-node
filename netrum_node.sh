@@ -179,11 +179,24 @@ show_requirements() {
 update_system() {
     show_info "$(get_text "updating")"
 
-    # Suppress VM warnings and update system
-    sudo apt update 2>/dev/null || true
-    sudo apt upgrade -y 2>/dev/null || true
+    # Update package lists
+    show_info "Updating package lists... (Обновление списков пакетов...)"
+    if sudo apt update 2>/dev/null; then
+        show_success "Package lists updated (Списки пакетов обновлены)"
+    else
+        show_warning "Package list update had issues, continuing... (Обновление списков пакетов имело проблемы, продолжаем...)"
+    fi
 
-    show_success "System updated (Система обновлена)"
+    # Upgrade system packages
+    show_info "Upgrading system packages... (Обновление системных пакетов...)"
+    if sudo apt upgrade -y 2>/dev/null; then
+        show_success "System packages upgraded (Системные пакеты обновлены)"
+    else
+        show_warning "System upgrade had issues, continuing... (Обновление системы имело проблемы, продолжаем...)"
+    fi
+
+    show_success "System update completed (Обновление системы завершено)"
+    return 0
 }
 
 # Install required packages
@@ -219,14 +232,48 @@ install_nodejs() {
         if [ "$NODE_VERSION" -ge 20 ]; then
             show_success "Node.js v20+ already installed (Node.js v20+ уже установлен)"
             return 0
+        else
+            show_info "Current Node.js version: $(node -v) (Текущая версия Node.js: $(node -v))"
+            show_info "Upgrading to Node.js v20... (Обновление до Node.js v20...)"
         fi
     fi
 
     # Install Node.js v20
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt install -y nodejs
+    show_info "Adding NodeSource repository... (Добавление репозитория NodeSource...)"
+    if curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -; then
+        show_success "NodeSource repository added (Репозиторий NodeSource добавлен)"
+    else
+        show_error "Failed to add NodeSource repository (Не удалось добавить репозиторий NodeSource)"
+        show_info "Trying alternative installation method... (Пробуем альтернативный метод установки...)"
 
-    show_success "Node.js v20 installed (Node.js v20 установлен)"
+        # Alternative: Install from Ubuntu repositories
+        if sudo apt install -y nodejs npm; then
+            show_success "Node.js installed from Ubuntu repositories (Node.js установлен из репозиториев Ubuntu)"
+            return 0
+        else
+            show_error "All Node.js installation methods failed (Все методы установки Node.js не удались)"
+            return 1
+        fi
+    fi
+
+    show_info "Installing Node.js v20... (Установка Node.js v20...)"
+    if sudo apt install -y nodejs; then
+        # Verify installation
+        if command -v node &> /dev/null && command -v npm &> /dev/null; then
+            NODE_VERSION=$(node -v)
+            NPM_VERSION=$(npm -v)
+            show_success "Node.js v20 installed successfully (Node.js v20 успешно установлен)"
+            show_info "Node.js version: $NODE_VERSION (Версия Node.js: $NODE_VERSION)"
+            show_info "npm version: $NPM_VERSION (Версия npm: $NPM_VERSION)"
+            return 0
+        else
+            show_error "Node.js installation verification failed (Проверка установки Node.js не удалась)"
+            return 1
+        fi
+    else
+        show_error "Failed to install Node.js (Не удалось установить Node.js)"
+        return 1
+    fi
 }
 
 # Clone and setup Netrum repository
@@ -244,11 +291,51 @@ setup_netrum_repo() {
     cd /root/netrum-lite-node
 
     show_info "$(get_text "installing_deps")"
-    if npm install; then
+    show_info "Installing dependencies... (Установка зависимостей...)"
+
+    # Show system information for debugging
+    show_info "System information (Информация о системе):"
+    show_info "Node.js version: $(node -v) (Версия Node.js: $(node -v))"
+    show_info "npm version: $(npm -v) (Версия npm: $(npm -v))"
+    show_info "Architecture: $(uname -m) (Архитектура: $(uname -m))"
+    show_info "OS: $(lsb_release -d 2>/dev/null | cut -f2 || echo "Unknown") (ОС: $(lsb_release -d 2>/dev/null | cut -f2 || echo "Неизвестно"))"
+
+    show_info "Note: Warnings about deprecated packages (like 'node-domexception') are normal and will not stop installation (Примечание: предупреждения об устаревших пакетах (например, 'node-domexception') - это нормально и не остановят установку)"
+
+    # Install dependencies - warnings are normal and should not stop installation
+    show_info "Running npm install... (Запуск npm install...)"
+
+    # Capture npm output to check for real errors vs warnings
+    NPM_OUTPUT=$(npm install 2>&1)
+    NPM_EXIT_CODE=$?
+
+    # Check if npm install actually succeeded despite warnings
+    if [ $NPM_EXIT_CODE -eq 0 ] || echo "$NPM_OUTPUT" | grep -q "added.*packages"; then
         show_success "Dependencies installed successfully (Зависимости успешно установлены)"
+
+        # Show warnings if any, but don't treat them as errors
+        if echo "$NPM_OUTPUT" | grep -q "warn deprecated"; then
+            show_info "Note: Some packages show deprecation warnings - this is normal and safe to ignore (Примечание: некоторые пакеты показывают предупреждения об устаревании - это нормально и безопасно игнорировать)"
+        fi
     else
-        show_error "Failed to install dependencies (Не удалось установить зависимости)"
-        return 1
+        show_warning "npm install had issues, trying alternative method... (npm install имел проблемы, пробуем альтернативный метод...)"
+
+        # Try alternative installation methods
+        show_info "Trying npm install --force... (Пробуем npm install --force...)"
+        if npm install --force 2>/dev/null; then
+            show_success "Dependencies installed with --force flag (Зависимости установлены с флагом --force)"
+        else
+            show_info "Trying npm install --legacy-peer-deps... (Пробуем npm install --legacy-peer-deps...)"
+            if npm install --legacy-peer-deps 2>/dev/null; then
+                show_success "Dependencies installed with --legacy-peer-deps flag (Зависимости установлены с флагом --legacy-peer-deps)"
+            else
+                show_error "All installation methods failed (Все методы установки не удались)"
+                show_error "npm output: (вывод npm:)"
+                echo "$NPM_OUTPUT"
+                show_info "Try running manually: cd /root/netrum-lite-node && npm install (Попробуйте запустить вручную: cd /root/netrum-lite-node && npm install)"
+                return 1
+            fi
+        fi
     fi
 
     show_info "$(get_text "linking_cli")"
@@ -563,6 +650,11 @@ show_help_commands() {
     show_cyan "• netrum-node-register   # Register node (Регистрация ноды)"
     show_cyan "• netrum-check-basename  # Check Base domain (Проверка Base домена)"
     show_cyan "• netrum-node-sign       # Sign message (Подпись сообщения)"
+    echo ""
+    show_yellow "Common Issues (Частые проблемы):"
+    show_white "• npm warnings about 'node-domexception' are normal and can be ignored (Предупреждения npm о 'node-domexception' - это нормально и их можно игнорировать)"
+    show_white "• Permission denied errors can be fixed with option 15 (Fix Permissions) (Ошибки прав доступа можно исправить опцией 15)"
+    show_white "• If installation fails, try running commands manually (Если установка не удалась, попробуйте запустить команды вручную)"
 }
 
 # Remove Netrum node
