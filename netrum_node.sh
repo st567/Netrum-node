@@ -888,46 +888,20 @@ show_management_menu() {
                 ;;
             5)
                 cd /root/netrum-lite-node
-
-                # Check if netrum-sync-log command exists and is executable
-                if command -v netrum-sync-log &> /dev/null; then
-                    if [ -x "$(which netrum-sync-log)" ]; then
-                        netrum-sync-log
-                    else
-                        show_error "netrum-sync-log command is not executable (команда netrum-sync-log не исполняема)"
-                        show_info "Try running: chmod +x $(which netrum-sync-log)"
-                        show_info "Or try: sudo chmod +x $(which netrum-sync-log)"
-                    fi
-                else
-                    show_error "netrum-sync-log command not found (команда netrum-sync-log не найдена)"
-                    show_info "Make sure Netrum CLI is properly installed (Убедитесь, что Netrum CLI правильно установлен)"
-                fi
-
-                echo ""
+                netrum-sync
+                echo
                 read -p "$(show_yellow "$(get_text "press_enter")")"
+                netrum-sync-log
                 ;;
             6)
                 start_mining
                 ;;
             7)
                 cd /root/netrum-lite-node
-
-                # Check if netrum-mining-log command exists and is executable
-                if command -v netrum-mining-log &> /dev/null; then
-                    if [ -x "$(which netrum-mining-log)" ]; then
-                        netrum-mining-log
-                    else
-                        show_error "netrum-mining-log command is not executable (команда netrum-mining-log не исполняема)"
-                        show_info "Try running: chmod +x $(which netrum-mining-log)"
-                        show_info "Or try: sudo chmod +x $(which netrum-mining-log)"
-                    fi
-                else
-                    show_error "netrum-mining-log command not found (команда netrum-mining-log не найдена)"
-                    show_info "Make sure Netrum CLI is properly installed (Убедитесь, что Netrum CLI правильно установлен)"
-                fi
-
-                echo ""
+                netrum-mining
+                echo
                 read -p "$(show_yellow "$(get_text "press_enter")")"
+                netrum-mining-log
                 ;;
             8)
                 show_earnings
