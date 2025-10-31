@@ -144,6 +144,11 @@ get_text() {
         "start_mining") echo "Start Mining (Запустить майнинг)" ;;
         "check_base_domain") echo "Check Base Domain (Проверить Base домен)" ;;
         "fix_permissions") echo "Fix Permissions (Исправить права доступа)" ;;
+        "service_status") echo "Check Service Status (Проверить статус сервиса)" ;;
+        "start_service") echo "Start Service (Запустить сервис)" ;;
+        "stop_service") echo "Stop Service (Остановить сервис)" ;;
+        "service_logs") echo "View Service Logs (Просмотр логов сервиса)" ;;
+        "restart_service") echo "Restart Service (Перезапустить сервис)" ;;
     esac
 }
 
@@ -498,6 +503,63 @@ fix_permissions() {
     echo ""
     show_success "Permission fix completed (Исправление прав доступа завершено)"
     show_info "Try running your Netrum commands now (Попробуйте запустить команды Netrum сейчас)"
+    echo ""
+    read -p "$(show_yellow "$(get_text "press_enter")")"
+}
+
+# Check service status
+check_service_status() {
+    show_info "$(get_text "service_status")"
+    echo ""
+    sudo systemctl status netrum-node-system.service
+    echo ""
+    read -p "$(show_yellow "$(get_text "press_enter")")"
+}
+
+# Start service
+start_service() {
+    show_info "$(get_text "start_service")"
+    echo ""
+    if sudo systemctl start netrum-node-system.service; then
+        show_success "Service started successfully (Сервис успешно запущен)"
+    else
+        show_error "Failed to start service (Не удалось запустить сервис)"
+    fi
+    echo ""
+    read -p "$(show_yellow "$(get_text "press_enter")")"
+}
+
+# Stop service
+stop_service() {
+    show_info "$(get_text "stop_service")"
+    echo ""
+    if sudo systemctl stop netrum-node-system.service; then
+        show_success "Service stopped successfully (Сервис успешно остановлен)"
+    else
+        show_error "Failed to stop service (Не удалось остановить сервис)"
+    fi
+    echo ""
+    read -p "$(show_yellow "$(get_text "press_enter")")"
+}
+
+# View service logs
+view_service_logs() {
+    show_info "$(get_text "service_logs")"
+    echo ""
+    show_info "Press Ctrl+C to exit logs view (Нажмите Ctrl+C для выхода из просмотра логов)"
+    echo ""
+    sudo journalctl -u netrum-node-system.service -f
+}
+
+# Restart service
+restart_service() {
+    show_info "$(get_text "restart_service")"
+    echo ""
+    if sudo systemctl restart netrum-node-system.service; then
+        show_success "Service restarted successfully (Сервис успешно перезапущен)"
+    else
+        show_error "Failed to restart service (Не удалось перезапустить сервис)"
+    fi
     echo ""
     read -p "$(show_yellow "$(get_text "press_enter")")"
 }
@@ -863,11 +925,16 @@ show_management_menu() {
         show_white "13) $(get_text "stop_services")"
         show_white "14) $(get_text "health_check")"
         show_white "15) $(get_text "fix_permissions")"
-        show_white "16) $(get_text "help_commands")"
+        show_white "16) $(get_text "service_status")"
+        show_white "17) $(get_text "start_service")"
+        show_white "18) $(get_text "stop_service")"
+        show_white "19) $(get_text "service_logs")"
+        show_white "20) $(get_text "restart_service")"
+        show_white "21) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-16] (Выбор [0-16]): ")" choice
+        read -p "$(show_cyan "Choice [0-21] (Выбор [0-21]): ")" choice
 
         case $choice in
             1)
@@ -936,6 +1003,21 @@ show_management_menu() {
                 fix_permissions
                 ;;
             16)
+                check_service_status
+                ;;
+            17)
+                start_service
+                ;;
+            18)
+                stop_service
+                ;;
+            19)
+                view_service_logs
+                ;;
+            20)
+                restart_service
+                ;;
+            21)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
