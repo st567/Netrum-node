@@ -149,6 +149,9 @@ get_text() {
         "stop_service") echo "Stop Service (Остановить сервис)" ;;
         "service_logs") echo "View Service Logs (Просмотр логов сервиса)" ;;
         "restart_service") echo "Restart Service (Перезапустить сервис)" ;;
+        "task_allow") echo "Task Allow Permission (Разрешение задачи)" ;;
+        "task") echo "Start Task (Запустить задачу)" ;;
+        "task_logs") echo "Task Logs (Логи задачи)" ;;
     esac
 }
 
@@ -622,6 +625,40 @@ claim_rewards() {
     read
 }
 
+# Task allow permission
+task_allow() {
+    show_info "$(get_text "task_allow")"
+    netrum-task-allow
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
+# Start task
+start_task() {
+    show_info "$(get_text "task")"
+    show_warning "Note: This will start task in background (Примечание: Это запустит задачу в фоне)"
+
+    # Change to the correct directory
+    cd /root/netrum-lite-node
+    netrum-task
+
+    show_success "Task started (Задача запущена)"
+    echo ""
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
+# View task logs
+view_task_logs() {
+    show_info "$(get_text "task_logs")"
+    echo ""
+    show_info "Press Ctrl+C to exit logs view (Нажмите Ctrl+C для выхода из просмотра логов)"
+    echo ""
+    cd /root/netrum-lite-node
+    netrum-task-log
+}
+
 # Remove wallet
 remove_wallet() {
     show_warning "⚠️ Remove Wallet (Удалить кошелек)"
@@ -741,6 +778,7 @@ show_help_commands() {
     show_info "$(get_text "help_commands")"
     echo ""
     show_white "Main Netrum commands (Основные команды Netrum):"
+    show_cyan "• netrum-update          # Update CLI (Обновить CLI)"
     show_cyan "• netrum-system          # System status (Статус системы)"
     show_cyan "• netrum-wallet          # Wallet info (Информация о кошельке)"
     show_cyan "• netrum-node-id         # Node ID (ID ноды)"
@@ -752,6 +790,11 @@ show_help_commands() {
     show_cyan "• netrum-sync-log        # Sync logs (Логи синхронизации)"
     show_cyan "• netrum-mining-log      # Mining logs (Логи майнинга)"
     echo ""
+    show_white "Task commands (Команды задач):"
+    show_cyan "• netrum-task-allow      # Allow task permission (Разрешить задачу)"
+    show_cyan "• netrum-task            # Start task (Запустить задачу)"
+    show_cyan "• netrum-task-log        # Task logs (Логи задачи)"
+    echo ""
     show_white "Wallet commands (Команды кошелька):"
     show_cyan "• netrum-new-wallet      # Create wallet (Создать кошелек)"
     show_cyan "• netrum-import-wallet   # Import wallet (Импортировать кошелек)"
@@ -760,6 +803,7 @@ show_help_commands() {
     echo ""
     show_white "Node commands (Команды ноды):"
     show_cyan "• netrum-node-register   # Register node (Регистрация ноды)"
+    show_cyan "• netrum-node-id-remove  # Clear Node ID (Очистить ID ноды)"
     show_cyan "• netrum-check-basename  # Check Base domain (Проверка Base домена)"
     show_cyan "• netrum-node-sign       # Sign message (Подпись сообщения)"
     echo ""
@@ -930,11 +974,14 @@ show_management_menu() {
         show_white "18) $(get_text "stop_service")"
         show_white "19) $(get_text "service_logs")"
         show_white "20) $(get_text "restart_service")"
-        show_white "21) $(get_text "help_commands")"
+        show_white "21) $(get_text "task_allow")"
+        show_white "22) $(get_text "task")"
+        show_white "23) $(get_text "task_logs")"
+        show_white "24) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-21] (Выбор [0-21]): ")" choice
+        read -p "$(show_cyan "Choice [0-24] (Выбор [0-24]): ")" choice
 
         case $choice in
             1)
@@ -1018,6 +1065,15 @@ show_management_menu() {
                 restart_service
                 ;;
             21)
+                task_allow
+                ;;
+            22)
+                start_task
+                ;;
+            23)
+                view_task_logs
+                ;;
+            24)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
