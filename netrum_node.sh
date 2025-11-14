@@ -117,6 +117,7 @@ get_text() {
         "status") echo "Status (Статус)" ;;
         "earnings") echo "Earnings (Доходы)" ;;
         "health_check") echo "Health Check (Проверка здоровья)" ;;
+        "start_sync") echo "Start Sync (Запустить синхронизацию)" ;;
         "sync_logs") echo "Sync Logs (Логи синхронизации)" ;;
         "mining_logs") echo "Mining Logs (Логи майнинга)" ;;
         "system_status") echo "System Status (Статус системы)" ;;
@@ -659,6 +660,26 @@ view_task_logs() {
     netrum-task-log
 }
 
+# View sync logs
+view_sync_logs() {
+    show_info "$(get_text "sync_logs")"
+    echo ""
+    show_info "Press Ctrl+C to exit logs view (Нажмите Ctrl+C для выхода из просмотра логов)"
+    echo ""
+    cd /root/netrum-lite-node
+    netrum-sync-log
+}
+
+# View mining logs
+view_mining_logs() {
+    show_info "$(get_text "mining_logs")"
+    echo ""
+    show_info "Press Ctrl+C to exit logs view (Нажмите Ctrl+C для выхода из просмотра логов)"
+    echo ""
+    cd /root/netrum-lite-node
+    netrum-mining-log
+}
+
 # Remove wallet
 remove_wallet() {
     show_warning "⚠️ Remove Wallet (Удалить кошелек)"
@@ -958,30 +979,31 @@ show_management_menu() {
         show_white "2) $(get_text "show_wallet")"
         show_white "3) $(get_text "check_base_domain")"
         show_white "4) $(get_text "sign_register_node")"
-        show_white "5) $(get_text "sync_logs")"
-        show_white "6) $(get_text "start_mining")"
-        show_white "7) $(get_text "mining_logs")"
-        show_white "8) $(get_text "earnings")"
-        show_white "9) $(get_text "claim_rewards")"
-        show_white "10) $(get_text "export_key")"
-        show_white "11) $(get_text "remove_wallet")"
-        show_white "12) $(get_text "clear_node_id")"
-        show_white "13) $(get_text "stop_services")"
-        show_white "14) $(get_text "health_check")"
-        show_white "15) $(get_text "fix_permissions")"
-        show_white "16) $(get_text "service_status")"
-        show_white "17) $(get_text "start_service")"
-        show_white "18) $(get_text "stop_service")"
-        show_white "19) $(get_text "service_logs")"
-        show_white "20) $(get_text "restart_service")"
-        show_white "21) $(get_text "task_allow")"
-        show_white "22) $(get_text "task")"
-        show_white "23) $(get_text "task_logs")"
-        show_white "24) $(get_text "help_commands")"
+        show_white "5) $(get_text "start_sync")"
+        show_white "6) $(get_text "sync_logs")"
+        show_white "7) $(get_text "start_mining")"
+        show_white "8) $(get_text "mining_logs")"
+        show_white "9) $(get_text "earnings")"
+        show_white "10) $(get_text "claim_rewards")"
+        show_white "11) $(get_text "export_key")"
+        show_white "12) $(get_text "remove_wallet")"
+        show_white "13) $(get_text "clear_node_id")"
+        show_white "14) $(get_text "stop_services")"
+        show_white "15) $(get_text "health_check")"
+        show_white "16) $(get_text "fix_permissions")"
+        show_white "17) $(get_text "service_status")"
+        show_white "18) $(get_text "start_service")"
+        show_white "19) $(get_text "stop_service")"
+        show_white "20) $(get_text "service_logs")"
+        show_white "21) $(get_text "restart_service")"
+        show_white "22) $(get_text "task_allow")"
+        show_white "23) $(get_text "task")"
+        show_white "24) $(get_text "task_logs")"
+        show_white "25) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-24] (Выбор [0-24]): ")" choice
+        read -p "$(show_cyan "Choice [0-25] (Выбор [0-25]): ")" choice
 
         case $choice in
             1)
@@ -1001,79 +1023,74 @@ show_management_menu() {
                 sign_register_node
                 ;;
             5)
-                cd /root/netrum-lite-node
-                netrum-sync
-                echo
-                read -p "$(show_yellow "$(get_text "press_enter")")"
-                netrum-sync-log
+                start_sync
                 ;;
             6)
-                start_mining
+                view_sync_logs
                 ;;
             7)
-                cd /root/netrum-lite-node
-                netrum-mining
-                echo
-                read -p "$(show_yellow "$(get_text "press_enter")")"
-                netrum-mining-log
+                start_mining
                 ;;
             8)
+                view_mining_logs
+                ;;
+            9)
                 show_earnings
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            9)
+            10)
                 claim_rewards
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            10)
+            11)
                 netrum-wallet-key
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            11)
+            12)
                 remove_wallet
                 ;;
-            12)
+            13)
                 clear_node_id
                 ;;
-            13)
+            14)
                 stop_services
                 ;;
-            14)
+            15)
                 health_check
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
                 ;;
-            15)
+            16)
                 fix_permissions
                 ;;
-            16)
+            17)
                 check_service_status
                 ;;
-            17)
+            18)
                 start_service
                 ;;
-            18)
+            19)
                 stop_service
                 ;;
-            19)
+            20)
                 view_service_logs
                 ;;
-            20)
+            21)
                 restart_service
                 ;;
-            21)
+            22)
                 task_allow
                 ;;
-            22)
+            23)
                 start_task
                 ;;
-            23)
+            24)
                 view_task_logs
                 ;;
-            24)
+            25)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"
