@@ -313,6 +313,13 @@ netrum-task-log
 3. Убедитесь, что нода зарегистрирована / Ensure node is registered
 
 #### Проблемы со Speedtest CLI / Speedtest CLI Issues
+
+Это распространенная проблема, которую можно решить двумя способами. На многих VPS серверах Speedtest CLI работает только на определенных портах. Это означает, что сама команда Speedtest может выполняться корректно, но когда вы пытаетесь получить результат скорости, VPS блокирует этот запрос. Обычно это происходит потому, что сервис Speedtest CLI ограничен или запрещен в некоторых странах. В таких случаях вам нужно получать результат скорости через определенный порт вместо порта по умолчанию. Также иногда Python пакет Speedtest CLI не получает достаточно времени или прав для сохранения результата скорости в формате JSON.
+
+This is a common issue that can be fixed in two ways. In many VPS servers, the Speedtest CLI works only on certain ports. This means the Speedtest command itself may run correctly, but when you try to fetch the speed result, the VPS blocks that request. This usually happens because the Speedtest CLI service is restricted or banned in some countries. In such cases, you need to fetch the speed result through a specific port instead of the default one. Sometimes, the Speedtest CLI Python package doesn't get enough time or permission to save the speed result in JSON format.
+
+**Решение / Solution:**
+
 Если возникают проблемы с speedtest-cli, используйте функцию исправления из меню управления (пункт 25) или выполните следующие команды вручную:
 
 If you encounter issues with speedtest-cli, use the fix function from the management menu (option 25) or run the following commands manually:
