@@ -842,13 +842,66 @@ remove_netrum() {
     if [[ $confirm_remove =~ ^[Yy]$ ]]; then
         show_info "$(get_text "removing")"
 
+        # Stop any running Netrum processes
+        show_info "Stopping Netrum processes... (Остановка процессов Netrum...)"
+        sudo pkill -f netrum 2>/dev/null || true
+        sleep 2
+
+        # Stop and remove systemd services
+        show_info "Stopping and removing systemd services... (Остановка и удаление системных сервисов...)"
+        sudo systemctl stop netrum-node-system.service 2>/dev/null || true
+        sudo systemctl disable netrum-node-system.service 2>/dev/null || true
+        sudo systemctl stop netrum-node.service 2>/dev/null || true
+        sudo systemctl disable netrum-node.service 2>/dev/null || true
+
+        # Remove service files
+        show_info "Removing service files... (Удаление файлов сервисов...)"
+        sudo rm -f /etc/systemd/system/netrum-node-system.service 2>/dev/null || true
+        sudo rm -f /etc/systemd/system/netrum-node.service 2>/dev/null || true
+        sudo systemctl daemon-reload 2>/dev/null || true
+
         # Remove global link
+        show_info "Removing global CLI link... (Удаление глобальной ссылки CLI...)"
         sudo npm unlink -g netrum 2>/dev/null || true
 
         # Remove installation directory
+        show_info "Removing installation directory... (Удаление директории установки...)"
         sudo rm -rf /root/netrum-lite-node
 
+        # Remove Node.js and npm (if installed by this script)
+        show_info "Removing Node.js and npm... (Удаление Node.js и npm...)"
+        sudo apt remove -y nodejs npm 2>/dev/null || true
+        sudo apt purge -y nodejs npm 2>/dev/null || true
+
+        # Remove NodeSource repository (if added)
+        show_info "Removing NodeSource repository... (Удаление репозитория NodeSource...)"
+        sudo rm -f /etc/apt/sources.list.d/nodesource*.list* 2>/dev/null || true
+        sudo rm -f /etc/apt/keyrings/nodesource.gpg 2>/dev/null || true
+        sudo rm -rf /usr/share/keyrings/nodesource.gpg 2>/dev/null || true
+
+        # Remove packages installed during installation
+        show_info "Removing installed packages... (Удаление установленных пакетов...)"
+        PACKAGES_TO_REMOVE=(
+            speedtest-cli
+            bc
+        )
+
+        for PACKAGE in "${PACKAGES_TO_REMOVE[@]}"; do
+            show_info "Removing $PACKAGE... (Удаление $PACKAGE...)"
+            sudo apt remove -y "$PACKAGE" 2>/dev/null || true
+            sudo apt purge -y "$PACKAGE" 2>/dev/null || true
+        done
+
+        # Note: curl, git, and jq are not removed as they are commonly used system tools
+        # Примечание: curl, git и jq не удаляются, так как это общеиспользуемые системные инструменты
+
+        # Clean up apt cache
+        show_info "Cleaning up apt cache... (Очистка кэша apt...)"
+        sudo apt autoremove -y 2>/dev/null || true
+        sudo apt autoclean 2>/dev/null || true
+
         show_success "$(get_text "removed")"
+        show_info "All Netrum packages have been removed (Все пакеты Netrum удалены)"
     else
         show_warning "Removal cancelled (Удаление отменено)"
     fi
