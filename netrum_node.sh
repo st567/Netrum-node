@@ -153,6 +153,7 @@ get_text() {
         "task_allow") echo "Task Allow Permission (Разрешение задачи)" ;;
         "task") echo "Start Task (Запустить задачу)" ;;
         "task_logs") echo "Task Logs (Логи задачи)" ;;
+        "fix_speedtest") echo "Fix Speedtest CLI (Исправить Speedtest CLI)" ;;
     esac
 }
 
@@ -680,6 +681,51 @@ view_mining_logs() {
     netrum-mining-log
 }
 
+# Fix speedtest-cli
+fix_speedtest_cli() {
+    show_info "$(get_text "fix_speedtest")"
+    echo ""
+
+    # Step 1: Remove old speedtest-cli if exists
+    show_info "Step 1: Removing old speedtest-cli... (Шаг 1: Удаление старого speedtest-cli...)"
+    sudo apt-get remove speedtest-cli -y 2>/dev/null || true
+    show_success "Old speedtest-cli removed (Старый speedtest-cli удален)"
+
+    # Step 2: Fix dependencies
+    show_info "Step 2: Fixing dependencies... (Шаг 2: Исправление зависимостей...)"
+    sudo apt-get install -f -y
+    show_success "Dependencies fixed (Зависимости исправлены)"
+
+    # Step 3: Update packages and install curl
+    show_info "Step 3: Updating packages and installing curl... (Шаг 3: Обновление пакетов и установка curl...)"
+    sudo apt-get update
+    sudo apt-get install curl -y
+    show_success "Packages updated and curl installed (Пакеты обновлены и curl установлен)"
+
+    # Step 4: Install speedtest from official repository
+    show_info "Step 4: Installing speedtest from official repository... (Шаг 4: Установка speedtest из официального репозитория...)"
+    curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
+    sudo apt-get install speedtest -y
+    show_success "Speedtest installed (Speedtest установлен)"
+
+    # Step 5: Run speedtest and save to file
+    show_info "Step 5: Running speedtest... (Шаг 5: Запуск speedtest...)"
+    if [ ! -d "/root/netrum-lite-node/src/system/system" ]; then
+        mkdir -p /root/netrum-lite-node/src/system/system
+    fi
+    speedtest --accept-license --accept-gdpr --format=json > /root/netrum-lite-node/src/system/system/speedtext.txt 2>&1
+    if [ $? -eq 0 ]; then
+        show_success "Speedtest completed and saved (Speedtest выполнен и сохранен)"
+    else
+        show_warning "Speedtest completed with warnings (Speedtest выполнен с предупреждениями)"
+    fi
+
+    echo ""
+    show_success "Speedtest CLI fix completed! (Исправление Speedtest CLI завершено!)"
+    show_info "Press Enter to continue... (Нажмите Enter для продолжения...)"
+    read
+}
+
 # Remove wallet
 remove_wallet() {
     show_warning "⚠️ Remove Wallet (Удалить кошелек)"
@@ -1052,11 +1098,12 @@ show_management_menu() {
         show_white "22) $(get_text "task_allow")"
         show_white "23) $(get_text "task")"
         show_white "24) $(get_text "task_logs")"
-        show_white "25) $(get_text "help_commands")"
+        show_white "25) $(get_text "fix_speedtest")"
+        show_white "26) $(get_text "help_commands")"
         show_white "0) $(get_text "back")"
         echo ""
 
-        read -p "$(show_cyan "Choice [0-25] (Выбор [0-25]): ")" choice
+        read -p "$(show_cyan "Choice [0-26] (Выбор [0-26]): ")" choice
 
         case $choice in
             1)
@@ -1144,6 +1191,9 @@ show_management_menu() {
                 view_task_logs
                 ;;
             25)
+                fix_speedtest_cli
+                ;;
+            26)
                 show_help_commands
                 echo ""
                 read -p "$(show_yellow "$(get_text "press_enter")")"

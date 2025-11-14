@@ -132,7 +132,8 @@ The script provides a convenient interactive menu for node management:
 21. **Разрешить задачи** / **Task Allow** - Разрешить выполнение задач
 22. **Запустить задачу** / **Start Task** - Запуск задачи
 23. **Логи задач** / **Task Logs** - Просмотр логов задач
-24. **Справка по командам** / **Help Commands** - Список всех команд
+24. **Исправить Speedtest CLI** / **Fix Speedtest CLI** - Исправление проблем со speedtest-cli
+25. **Справка по командам** / **Help Commands** - Список всех команд
 
 ## 🔧 Управление нодой / Node Management
 
@@ -310,6 +311,34 @@ netrum-task-log
 1. Убедитесь, что разрешено выполнение задач / Ensure task permission is allowed: `netrum-task-allow`
 2. Проверьте логи задач / Check task logs: `netrum-task-log`
 3. Убедитесь, что нода зарегистрирована / Ensure node is registered
+
+#### Проблемы со Speedtest CLI / Speedtest CLI Issues
+Если возникают проблемы с speedtest-cli, используйте функцию исправления из меню управления (пункт 25) или выполните следующие команды вручную:
+
+If you encounter issues with speedtest-cli, use the fix function from the management menu (option 25) or run the following commands manually:
+
+```bash
+# Удалить старый speedtest-cli / Remove old speedtest-cli
+sudo apt-get remove speedtest-cli -y
+
+# Исправить зависимости / Fix dependencies
+sudo apt-get install -f -y
+
+# Обновить пакеты и установить curl / Update packages and install curl
+sudo apt-get update
+sudo apt-get install curl -y
+
+# Установить speedtest из официального репозитория / Install speedtest from official repository
+curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
+sudo apt-get install speedtest -y
+
+# Запустить speedtest и сохранить результат / Run speedtest and save result
+speedtest --accept-license --accept-gdpr --format=json > /root/netrum-lite-node/src/system/system/speedtext.txt
+```
+
+**Примечание**: Функция исправления доступна в меню управления (пункт 25) и автоматически выполнит все необходимые действия.
+
+**Note**: The fix function is available in the management menu (option 25) and will automatically perform all necessary actions.
 
 ## 🛡️ Безопасность / Security
 
